@@ -1,0 +1,28 @@
+/* 全局背景图 */
+body {
+    background-attachment: fixed !important;
+    background-image: url(/img/home_bg.png) !important;
+    background-size: cover !important;
+}
+
+/* 全局毛玻璃效果：首页卡片、侧边栏、文章主体 */
+#recent-posts > .recent-post-item,
+.card-widget,
+#post,
+#page,
+.prev-post,
+.next-post,
+#footer,
+#git_container { /* 加上了看板容器的透明 */
+    background: rgba(255, 255, 255, 0.7) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    margin-bottom: 20px;
+}
+
+/* 导航栏透明 */
+#nav {
+    background: rgba(255, 255, 255, 0.5) !important;
+}
