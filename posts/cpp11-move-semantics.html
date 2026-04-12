@@ -1,0 +1,407 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Re：思考·重建·记录 现代C++ C++11篇 (二) 右值引用与移动语义&amp;引用折叠与完美转发 | 此方の空中花园</title><meta name="author" content="小此方"><meta name="copyright" content="小此方"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="◆ 博主名称： 晓此方-CSDN博客  大家好，欢迎来到晓此方的博客。  ⭐️现代C++系列个人专栏：  插曲：现代C++   ⭐️Re系列专栏：我们思考 (Rethink) · 我们重建 (Rebuild) · 我们记录 (Record)   概要&amp;序論 &emsp;&emsp;&emsp; 这里是此方，好久不见。 本专栏是【主题曲：C++程序设计】专栏的补充篇【插曲：现代C++">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Re：思考·重建·记录 现代C++ C++11篇 (二) 右值引用与移动语义&amp;引用折叠与完美转发">
+<meta property="og:url" content="https://zhoubaochuan049.github.io/posts/cpp11-move-semantics.html">
+<meta property="og:site_name" content="此方の空中花园">
+<meta property="og:description" content="◆ 博主名称： 晓此方-CSDN博客  大家好，欢迎来到晓此方的博客。  ⭐️现代C++系列个人专栏：  插曲：现代C++   ⭐️Re系列专栏：我们思考 (Rethink) · 我们重建 (Rebuild) · 我们记录 (Record)   概要&amp;序論 &emsp;&emsp;&emsp; 这里是此方，好久不见。 本专栏是【主题曲：C++程序设计】专栏的补充篇【插曲：现代C++">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://zhoubaochuan049.github.io/img/MorernCpp02.png">
+<meta property="article:published_time" content="2026-04-12T05:47:58.000Z">
+<meta property="article:modified_time" content="2026-04-12T06:18:31.460Z">
+<meta property="article:author" content="小此方">
+<meta property="article:tag" content="C++">
+<meta property="article:tag" content="C++11">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://zhoubaochuan049.github.io/img/MorernCpp02.png"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Re：思考·重建·记录 现代C++ C++11篇 (二) 右值引用与移动语义&引用折叠与完美转发",
+  "url": "https://zhoubaochuan049.github.io/posts/cpp11-move-semantics.html",
+  "image": "https://zhoubaochuan049.github.io/img/MorernCpp02.png",
+  "datePublished": "2026-04-12T05:47:58.000Z",
+  "dateModified": "2026-04-12T06:18:31.460Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "小此方",
+      "url": "https://ZhouBaoChuan049.github.io"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://zhoubaochuan049.github.io/posts/cpp11-move-semantics.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css?v=5.5.4"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.1.0/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Re：思考·重建·记录 现代C++ C++11篇 (二) 右值引用与移动语义&引用折叠与完美转发',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><meta name="referrer" content="no-referrer" /><meta name="generator" content="Hexo 8.1.1"></head><body><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(/img/MorernCpp02.png);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">此方の空中花园</span></a><a class="nav-page-title" href="/"><span class="site-name">Re：思考·重建·记录 现代C++ C++11篇 (二) 右值引用与移动语义&amp;引用折叠与完美转发</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"></div></nav><div id="post-info"><h1 class="post-title">Re：思考·重建·记录 现代C++ C++11篇 (二) 右值引用与移动语义&amp;引用折叠与完美转发</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-04-12T05:47:58.000Z" title="发表于 2026-04-12 13:47:58">2026-04-12</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-04-12T06:18:31.460Z" title="更新于 2026-04-12 14:18:31">2026-04-12</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E3%80%90%E6%8F%92%E6%9B%B2%E3%80%91%E7%8E%B0%E4%BB%A3C/">【插曲】现代C++</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><img src="https://i-blog.csdnimg.cn/img_convert/1b879107f5e34446d8cc742ba0ff79d9.png" width="250" alt="头像" style="display:block;margin:0 auto;">
+
+
+<center><b> ◆ 博主名称： 晓此方-CSDN博客
+<center> 大家好，欢迎来到晓此方的博客。
+<div align="center">
+⭐️现代C++系列个人专栏：
+<a target="_blank" rel="noopener" href="https://blog.csdn.net/z2314246476/category_13146712.html">
+插曲：现代C++
+</a>
+</div>
+<center>⭐️<b>Re系列专栏：我们思考 (Rethink) · 我们重建 (Rebuild) · 我们记录 (Record)
+
+<hr>
+<h1 id="概要-序論"><a href="#概要-序論" class="headerlink" title="概要&amp;序論"></a>概要&amp;序論</h1><blockquote>
+<p>&emsp;&emsp;&emsp; <strong>这里是此方，好久不见。</strong> 本专栏是【<strong>主题曲：C++程序设计</strong>】专栏的补充篇【<strong>插曲：现代C++</strong>】。本系列将优先深度解析C++11标准，力求内容详实，无微不至。C++14~C++20的进阶内容将在后续间隔一段时间后连载。<font color ="red"><b>本期将重点讲解：右值引用与移动语义以及他们常见的运用场景：引用折叠与完美转发等内容</font></b>.<strong>好的，让我们现在开始吧。</strong></p>
+</blockquote>
+<p>&emsp;&emsp;&emsp; C++98的C++语法中就有引用的语法，而C++11中<strong>新增了的右值引用</strong>语法特性，C++11之后我们之前学习的引用就叫做<code>左值引用</code>。<font color ="red"><b>无论左值引用还是右值引用，都是给对象取别名。</font></b></p>
+<h1 id="一，C-11后的概念扩展：左值与右值"><a href="#一，C-11后的概念扩展：左值与右值" class="headerlink" title="一，C++11后的概念扩展：左值与右值"></a>一，C++11后的概念扩展：左值与右值</h1><h2 id="1-1左值的定义、判断依据与举例"><a href="#1-1左值的定义、判断依据与举例" class="headerlink" title="1.1左值的定义、判断依据与举例"></a>1.1左值的定义、判断依据与举例</h2><p>&emsp;&emsp;&emsp; 左值是一个表示数据的表达式（如变量名或解引用的指针），一般是有<code>持久状态，存储在内存中</code>，我们可以<code>获取它的地址</code>，左值可以出现赋值符号的左边，也可以出现在赋值符号右边。<strong>定义时const修饰后的左值，不能给他赋值，但是可以取它的地址。</strong></p>
+<blockquote>
+<p>&emsp;&emsp;&emsp; <font color ="red"><strong>关键：可以取地址</strong></font></p>
+</blockquote>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 左值：可以取地址，以下的p、b、c、*p、s、s[0]就是常⻅的左值</span></span><br><span class="line"><span class="type">int</span>* p = <span class="keyword">new</span> <span class="built_in">int</span>(<span class="number">0</span>);</span><br><span class="line"><span class="type">int</span> b = <span class="number">1</span>;</span><br><span class="line"><span class="type">const</span> <span class="type">int</span> c = b;</span><br><span class="line">*p = <span class="number">10</span>;</span><br><span class="line"><span class="function">string <span class="title">s</span><span class="params">(<span class="string">&quot;111111&quot;</span>)</span></span>;</span><br><span class="line">s[<span class="number">0</span>] = <span class="string">&#x27;x&#x27;</span>;</span><br><span class="line">cout &lt;&lt; &amp;c &lt;&lt; endl;</span><br><span class="line">cout &lt;&lt; (<span class="type">void</span>*)&amp;s[<span class="number">0</span>] &lt;&lt; endl;<span class="comment">//这里强制类型转换的原因是C++不能打印char*地址</span></span><br></pre></td></tr></table></figure>
+<h2 id="1-2右值的定义、判断依据与举例"><a href="#1-2右值的定义、判断依据与举例" class="headerlink" title="1.2右值的定义、判断依据与举例"></a>1.2右值的定义、判断依据与举例</h2><p>&emsp;&emsp;&emsp; 右值也是一个表示数据的表达式，要么是<strong>字面值常量、要么是表达式求值过程中创建的临时对象</strong>等，右值可以出现在赋值符号的右边，但是不能出现出现在赋值符号的左边，<code>右值不能取地址。</code></p>
+<blockquote>
+<p>&emsp;&emsp;&emsp; <font color ="red"><strong>关键：不可以取地址</strong></font></p>
+</blockquote>
+<p>&emsp;&emsp;&emsp; <strong>右值例如：</strong> 临时变量，字面量常量，存储于寄存器中的变量等。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 以下几个10、x + y、fmin(x, y)、string(&quot;11111&quot;)都是常见的右值</span></span><br><span class="line"><span class="number">10</span>;<span class="comment">//存在寄存器里面取不到地址</span></span><br><span class="line">x + y;<span class="comment">//存在寄存器里面取不到地址</span></span><br><span class="line"><span class="built_in">fmin</span>(x, y);<span class="comment">//传值返回临时对象</span></span><br><span class="line"><span class="built_in">string</span>(<span class="string">&quot;11111&quot;</span>);<span class="comment">//匿名对象</span></span><br></pre></td></tr></table></figure>
+
+<p><img src="https://i-blog.csdnimg.cn/direct/7cd22cbc8c1b46828a22a8e408458385.png" alt="在这里插入图片描述"></p>
+<p>&emsp;&emsp;&emsp; <strong>这里的fmin是一个计算函数</strong>，用来计算两个值x，y中的较小值。不是本文重点，这里不多讲。它的返回值是传值返回生成的临时对象<strong>属于右值。</strong>(<em>不是所有的函数返回值都是右值，传递左值引用返回的函数传递的是对象的别名，能够取到地址，是左值</em>)</p>
+<blockquote>
+<center><b>科普内容</b>
+
+<p>值得一提的是，<strong>左值的英文简写为lvalue</strong>，<strong>右值的英文简写为rvalue</strong>。传统认为它们分别是left value、right value 的缩写。<br>现代C++中，lvalue 被解释为<strong>locator value</strong>的缩写，可意为存储在内存中、有明确存储地址<code>可以取地址</code>的对象，而 rvalue 被解释为 <strong>read value</strong>，指的是那些可以提供数据值，<code>但是不可以寻址</code>。</p>
+</blockquote>
+<p>&emsp;&emsp;&emsp; <strong>取右值的地址会报什么错？</strong></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//error C2102 &quot;&amp;&quot;要求左值</span></span><br><span class="line">cout &lt;&lt; &amp;<span class="built_in">string</span>(<span class="string">&quot;11111&quot;</span>) &lt;&lt; endl;</span><br></pre></td></tr></table></figure>
+
+
+<blockquote>
+<p>&emsp;&emsp;&emsp;<strong>总结</strong>：<font color ="red"><strong>左值和右值的核心区别就是能否取地址。</strong></font></p>
+</blockquote>
+<h1 id="二，左值引用和右值引用"><a href="#二，左值引用和右值引用" class="headerlink" title="二，左值引用和右值引用"></a>二，左值引用和右值引用</h1><h2 id="2-1左值引用和右值引用的定义"><a href="#2-1左值引用和右值引用的定义" class="headerlink" title="2.1左值引用和右值引用的定义"></a>2.1左值引用和右值引用的定义</h2><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Type&amp; r1 = x; Type&amp;&amp; rr1 = y; </span><br></pre></td></tr></table></figure>
+
+<p>&emsp;&emsp;&emsp;第一个语句就是<strong>左值引用</strong>，左值引用就是给左值取别名，第二个就是<strong>右值引用</strong>，同样的道理，右值引用就是给右值取别名。</p>
+<h2 id="2-2左右值引用交叉"><a href="#2-2左右值引用交叉" class="headerlink" title="2.2左右值引用交叉"></a>2.2左右值引用交叉</h2><blockquote>
+<center><b>直接操作不允许</b></center>
+
+<ol>
+<li>左值引用<strong>不能直接引用右值</strong>。</li>
+<li>右值引用<strong>不能直接引用左值</strong>。</li>
+</ol>
+</blockquote>
+<h3 id="2-2-1左值引用打破规则的方法——const-左值引用"><a href="#2-2-1左值引用打破规则的方法——const-左值引用" class="headerlink" title="2.2.1左值引用打破规则的方法——const 左值引用"></a>2.2.1左值引用打破规则的方法——const 左值引用</h3><p>&emsp;&emsp;&emsp;右值不能被左值引用引用的根本在于，右值不能被修改，被<strong>左值引用后可以被修改导致权限放大。</strong> 所以加上const的左值引用就可以引用右值。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 左值引用不能直接引用右值，但是const左值引用可以引用右值</span></span><br><span class="line"><span class="type">const</span> <span class="type">int</span>&amp; rx1 = <span class="number">10</span>;</span><br><span class="line"><span class="type">const</span> <span class="type">double</span>&amp; rx2 = x + y;</span><br><span class="line"><span class="type">const</span> <span class="type">double</span>&amp; rx3 = <span class="built_in">fmin</span>(x, y);</span><br><span class="line"><span class="type">const</span> string&amp; rx4 = <span class="built_in">string</span>(<span class="string">&quot;11111&quot;</span>);</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;&emsp;这也是为什么以前总是推荐你的函数参数列表写成const 左值引用的原因。<strong>这样既可以传递左值又可以传递右值。</strong></p>
+<h3 id="2-2-2右值引用打破规则的方法——move-左值"><a href="#2-2-2右值引用打破规则的方法——move-左值" class="headerlink" title="2.2.2右值引用打破规则的方法——move 左值"></a>2.2.2右值引用打破规则的方法——move 左值</h3><p><img src="https://i-blog.csdnimg.cn/direct/d0c4f1601cea4965a0b7399b0bf3d9bf.png" alt="在这里插入图片描述"></p>
+<p>&emsp;&emsp;&emsp;<strong>move 是库里面的一个函数模板</strong>，本质内部是进行<code>强制类型转换</code>（<strong>底层就像：string&amp;&amp; rrx5 &#x3D; (string&amp;&amp;)s;</strong>），当然他还涉及一些引用折叠的知识，这个我们后面会细讲。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 右值引用不能直接引用左值，但是右值引用可以引用move(左值)</span></span><br><span class="line"><span class="type">int</span>&amp;&amp; rrx1 = <span class="built_in">move</span>(b);<span class="comment">//move不会改变左值原本的左值属性</span></span><br><span class="line"><span class="type">int</span>*&amp;&amp; rrx2 = <span class="built_in">move</span>(p);</span><br><span class="line"><span class="type">int</span>&amp;&amp; rrx3 = <span class="built_in">move</span>(*p);</span><br><span class="line">string&amp;&amp; rrx4 = <span class="built_in">move</span>(s);</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="2-3右值引用绑定右值后引发的一系列问题"><a href="#2-3右值引用绑定右值后引发的一系列问题" class="headerlink" title="2.3右值引用绑定右值后引发的一系列问题"></a>2.3右值引用绑定右值后引发的一系列问题</h2><h3 id="2-3-1右值别名获权修改右值"><a href="#2-3-1右值别名获权修改右值" class="headerlink" title="2.3.1右值别名获权修改右值"></a>2.3.1右值别名获权修改右值</h3><p>&emsp;&emsp;&emsp;需要注意的是变量表达式都是左值属性，也就意味着一个右值被右值引用绑定后，<strong>右值引用变量表达式的属性是左值。</strong> 既然是左值，那么就意味着可以<strong>用这个别名来修改该右值。</strong> （<code>C++11的设计初衷也正因此</code>）<br>&emsp;&emsp;&emsp;<strong>右值引用变量在用于表达式时属性是左值</strong>，这个设计这里会感觉跟怪，下一小节我们讲右值引用的使用场景时，就能体会这样设计的价值了。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    std::string&amp;&amp; r3 = <span class="built_in">string</span>(<span class="string">&quot;Ciallo&quot;</span>); </span><br><span class="line">    r3=<span class="string">&quot;Hello&quot;</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<img src="https://i-blog.csdnimg.cn/direct/59b41b73311a4f9e8163f5090a8bd80a.png" width="250" alt="头像" style="display:block;margin:0 auto;">
+
+<h3 id="2-3-2右值别名延长右值生命周期"><a href="#2-3-2右值别名延长右值生命周期" class="headerlink" title="2.3.2右值别名延长右值生命周期"></a>2.3.2右值别名延长右值生命周期</h3><p>&emsp;&emsp;&emsp;右值引用可用于为临时<strong>对象延长生命周期</strong>，const 的左值引用也能延长临时对象生存期。<br>&emsp;&emsp;&emsp;<strong>延长声明周期的体现</strong>：析构操作发生在函数执行结束，而非右值所在行。如下代码中<strong>r2&#x2F;r3</strong>销毁，临时对象才销毁。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="type">const</span> std::string&amp; r2 = <span class="number">1</span> + <span class="number">1</span>; <span class="comment">// const 的左值引用延长生命周期</span></span><br><span class="line">    std::string&amp;&amp; r3 = <span class="built_in">string</span>(<span class="string">&quot;Ciallo&quot;</span>); <span class="comment">//右值引用延长生存期</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+
+<h2 id="2-4右值引用与左值引用的底层一致"><a href="#2-4右值引用与左值引用的底层一致" class="headerlink" title="2.4右值引用与左值引用的底层一致"></a>2.4右值引用与左值引用的底层一致</h2><p>&emsp;&emsp;&emsp;语法层面看，左值引用和右值引用<strong>都是取别名，不开空间</strong>。从汇编底层的角度看下面代码中 Ref 和 Ref01 汇编层实现，<code>底层都是用指针实现的，没什么区别</code>。<font color ="red"><strong>底层汇编等实现和上层语法表达的意义有时是背离的，所以不要然到一起去理解，互相佐证！</strong></font></p>
+<p><img src="https://i-blog.csdnimg.cn/direct/6687668976e641c18ad166afbe4fe75e.png" alt="在这里插入图片描述"></p>
+<h2 id="2-5左值与右值的参数匹配"><a href="#2-5左值与右值的参数匹配" class="headerlink" title="2.5左值与右值的参数匹配"></a>2.5左值与右值的参数匹配</h2><p>&emsp;&emsp;&emsp;C++98中，我们实现一个<strong>const左值引用</strong>作为参数的函数，那么实参<strong>传递左值和右值都可以匹配</strong>。<br>&emsp;&emsp;&emsp;C++11以后，分别重载<code>左值引用、const左值引用、右值引用</code>作为形参的f函数，那么实参是<strong>左值会匹配f(左值引用)，实参是const左值会匹配f(const 左值引用)，实参是右值会匹配f(右值引用)。</strong></p>
+<p><img src="https://i-blog.csdnimg.cn/direct/41f06d2324db4b019d60217482d44159.png" alt="在这里插入图片描述"></p>
+<center><font color ="red"><b>———了解了右值引用后，我们正式开始进入移动语义的研究———</center></b></font>
+
+
+
+<h1 id="三，移动语义的定义与意义"><a href="#三，移动语义的定义与意义" class="headerlink" title="三，移动语义的定义与意义"></a>三，移动语义的定义与意义</h1><h2 id="3-1移动语义为何出现"><a href="#3-1移动语义为何出现" class="headerlink" title="3.1移动语义为何出现"></a>3.1移动语义为何出现</h2><h3 id="3-1-1C-11前返回值场景的悖论"><a href="#3-1-1C-11前返回值场景的悖论" class="headerlink" title="3.1.1C++11前返回值场景的悖论"></a>3.1.1C++11前返回值场景的悖论</h3><p>&emsp;&emsp;&emsp;<strong>左值引用主要使用场景是</strong>：在函数中左值引用传参和左值引用传返回值时减少拷贝，同时还可以修改实参和修改返回对象的值。左值引用已经解决大多数场景的拷贝效率问题，<strong>但是有些场景不能使用传左值引用返回，如下</strong>：<br>&emsp;&emsp;&emsp;<a target="_blank" rel="noopener" href="https://leetcode.cn/problems/pascals-triangle/description/">力扣-杨辉三角</a><strong>或者是</strong><a target="_blank" rel="noopener" href="https://leetcode.cn/problems/add-strings/description/">力扣-字符串相加</a>，<strong>这里举一个例子。</strong> 如下，<strong>先说结论两头堵死，为什么？</strong></p>
+<ol>
+<li>这个vector&lt;vector<int>&gt; vv(numRows);是定义在<strong>函数内部的临时变量</strong>，离开函数后栈帧销毁，必然不能用引用返回。</li>
+<li>这个vector&lt;vector<int>&gt; vv(numRows);<strong>二维数组，拷贝消耗非常巨大</strong>，自然不能拷贝返回。</li>
+</ol>
+<blockquote>
+<p><strong>这里补充一个有趣的点，后面解释原理：</strong></p>
+<ol>
+<li>这里如果返回左值引用，有的编译器会直接报错。</li>
+<li>这里如果返回右值引用，<strong>不会报错但是什么都没有返回。</strong></li>
+</ol>
+</blockquote>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Solution</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">	<span class="comment">//vector&lt;vector&lt;int&gt;&gt;&amp; generate(int numRows)</span></span><br><span class="line">    vector&lt;vector&lt;<span class="type">int</span>&gt;&gt; <span class="built_in">generate</span>(<span class="type">int</span> numRows) &#123;</span><br><span class="line">        vector&lt;vector&lt;<span class="type">int</span>&gt;&gt; <span class="built_in">vv</span>(numRows);</span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; numRows; ++i)</span><br><span class="line">            vv[i].<span class="built_in">resize</span>(i + <span class="number">1</span>, <span class="number">1</span>);</span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">2</span>; i &lt; numRows; ++i) &#123;</span><br><span class="line">            <span class="keyword">for</span> (<span class="type">int</span> j = <span class="number">1</span>; j &lt; i; ++j)</span><br><span class="line">                vv[i][j] = vv[i - <span class="number">1</span>][j] + vv[i - <span class="number">1</span>][j - <span class="number">1</span>];</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> vv;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    vector&lt;vector&lt;<span class="type">int</span>&gt;&gt; ret = <span class="built_in">Solution</span>().<span class="built_in">generate</span>(<span class="number">5</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<p>&emsp;&emsp;&emsp;这种情况下，古人是怎么解决的？C++98 中的解决方案是使用<code>输出型参数</code>解决，如下，<strong>但是输出型参数可读性和代码维护性都比较差。</strong></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Solution</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">generate</span><span class="params">(vector&lt;vector&lt;<span class="type">int</span>&gt;&gt; ret,<span class="type">int</span> numRows)</span> </span>&#123;</span><br><span class="line">        vector&lt;vector&lt;<span class="type">int</span>&gt;&gt; <span class="built_in">vv</span>(numRows);</span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; numRows; ++i)</span><br><span class="line">            vv[i].<span class="built_in">resize</span>(i + <span class="number">1</span>, <span class="number">1</span>);</span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">2</span>; i &lt; numRows; ++i) &#123;</span><br><span class="line">            <span class="keyword">for</span> (<span class="type">int</span> j = <span class="number">1</span>; j &lt; i; ++j)</span><br><span class="line">                vv[i][j] = vv[i - <span class="number">1</span>][j] + vv[i - <span class="number">1</span>][j - <span class="number">1</span>];</span><br><span class="line">        &#125;</span><br><span class="line">        ret = vv;</span><br><span class="line">        <span class="keyword">return</span> ;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    vector&lt;vector&lt;<span class="type">int</span>&gt;&gt; _ret;</span><br><span class="line">    <span class="built_in">Solution</span>().<span class="built_in">generate</span>(_ret,<span class="number">5</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<center><font color ="red"><b>于是乎，为了解决这种问题，C++11带来了右值引用与移动语义</center></b></font>
+
+
+
+
+
+<h2 id="3-2移动语义的定义——从拷贝到剪切"><a href="#3-2移动语义的定义——从拷贝到剪切" class="headerlink" title="3.2移动语义的定义——从拷贝到剪切"></a>3.2移动语义的定义——从拷贝到剪切</h2><p>&emsp;&emsp;&emsp;移动语义是一种资源管理优化技术。它允许将底层资源（如动态分配的内存、文件句柄、网络连接等）<strong>从一个“即将消亡”的对象（右值）直接“转移”到另一个对象中，从而避免了昂贵且不必要的“深拷贝”。</strong><br>&emsp;&emsp;&emsp;移动语义的逻辑非常现实：既然那个临时对象马上就要死了，为什么还要费力去复制它的数据呢？<strong>直接把它的数据“偷”过来（把指针指向它的内存），然后把临时对象的指针置为空，这就完成了“移动”。</strong></p>
+<h2 id="3-3移动语义的两大基石其之二：移动构造函数和移动赋值运算符"><a href="#3-3移动语义的两大基石其之二：移动构造函数和移动赋值运算符" class="headerlink" title="3.3移动语义的两大基石其之二：移动构造函数和移动赋值运算符"></a>3.3移动语义的两大基石其之二：移动构造函数和移动赋值运算符</h2><p><img src="https://i-blog.csdnimg.cn/direct/e4704b2b53a54e22b27b9cbe3c4bd836.png" alt="在这里插入图片描述"></p>
+<h3 id="3-3-1什么是移动构造函数和移动赋值运算符重载"><a href="#3-3-1什么是移动构造函数和移动赋值运算符重载" class="headerlink" title="3.3.1什么是移动构造函数和移动赋值运算符重载"></a>3.3.1什么是移动构造函数和移动赋值运算符重载</h3><p>&emsp;&emsp;&emsp;移动构造函数是一种构造函数，<strong>类似拷贝构造函数</strong>，移动构造函数要求第一个参数是该类类型的引用，<code>但是不同的是要求这个参数是右值引用</code>，如果还有其他参数，额外的参数必须有缺省值。<br>&emsp;&emsp;&emsp;移动赋值是一个赋值运算符的重载，它跟拷贝赋值构成函数重载，<strong>类似拷贝赋值函数</strong>，移动赋值函数要求第一个参数是该类类型的引用，<code>但是不同的是要求这个参数是右值引用</code>。<br>&emsp;&emsp;&emsp;对于像string&#x2F;vector这样的深拷贝的类或者<strong>包含深拷贝的成员变量的类，移动构造和移动赋值才有意义</strong>，因为移动构造和移动赋值的第一个参数都是<strong>右值引用的类型</strong>，他的本质是要“窃取”引用的右值对象的资源，而不是像拷贝构造和拷贝赋值那样去拷贝资源，从提高效率。</p>
+<h3 id="3-3-2移动构造和移动赋值的代码实现"><a href="#3-3-2移动构造和移动赋值的代码实现" class="headerlink" title="3.3.2移动构造和移动赋值的代码实现"></a>3.3.2移动构造和移动赋值的代码实现</h3><p>&emsp;&emsp;&emsp;<strong>把我们 以前写的my_string拿过来讲，代码链接：</strong>（先凑合用，后期会同步到Github）<a target="_blank" rel="noopener" href="https://gitee.com/the-chronicles-of-zhou-bao/this-partys---c/commit/0c82c7c14c1df6d2c76b92da9c6453a1f27d031d">此方的Gittee代码仓库-string底层实现</a><br>&emsp;&emsp;&emsp;<strong>移动构造函数的代码</strong></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//移动构造</span></span><br><span class="line"><span class="built_in">string</span>(string&amp;&amp; Ref)</span><br><span class="line">&#123;</span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;yidonggouzao&quot;</span> &lt;&lt; endl;</span><br><span class="line">    <span class="built_in">swap</span>(Ref);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;&emsp;<strong>移动赋值运算符重载的代码</strong></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//移动赋值</span></span><br><span class="line">string&amp; <span class="keyword">operator</span>=(string&amp;&amp; Ref)</span><br><span class="line">&#123;</span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;yidong fuzhi&quot;</span> &lt;&lt; endl;</span><br><span class="line">    <span class="built_in">swap</span>(Ref);</span><br><span class="line">    <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;&emsp;<strong>回收伏笔</strong>：只有右值引用的属性是左值属性，这里才能<strong>swap</strong>修改这个引用指向的值，反之如果是右值引用是右值属性就不能修改。<br>&emsp;&emsp;&emsp;右值引用指向的右值的<strong>资源全部被换走：</strong></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">swap</span><span class="params">(string&amp; s)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::<span class="built_in">swap</span>(s._str, _str);</span><br><span class="line">    std::<span class="built_in">swap</span>(s._size, _size);</span><br><span class="line">    std::<span class="built_in">swap</span>(s._capacity, _capacity);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>&emsp;&emsp;&emsp;当同时存在拷贝构造与移动构造的时候，<strong>左值会匹配拷贝构造，右值会匹配移动构造</strong>。因为：</p>
+<ol>
+<li>左值传递过来的那个引用指向的那个对象<strong>还是有空间的。我还要用</strong>，所以不能直接掠夺，<strong>必须深拷贝。</strong></li>
+<li>传递过来的右值就不一样了，<strong>右值马上就要销毁了，我可以直接掠夺</strong>。</li>
+<li>以前没有移动构造时候，即使是将要消亡的右值也要走拷贝构造，浪费资源。</li>
+</ol>
+<p><img src="https://i-blog.csdnimg.cn/direct/1c2e798a3c5848c2976181180dd91274.png" alt="在这里插入图片描述"></p>
+<h2 id="3-4移动语义解决返回值场景问题"><a href="#3-4移动语义解决返回值场景问题" class="headerlink" title="3.4移动语义解决返回值场景问题"></a>3.4移动语义解决返回值场景问题</h2><p>&emsp;&emsp;&emsp;回到3.1我们提到的。<strong>这个时候使用移动语义可以有效解决这个问题：</strong><br>&emsp;&emsp;&emsp;<strong>原本：</strong> vv指向的资源拷贝给ret指向的资源，再销毁vv所在函数的栈帧。<br><img src="https://i-blog.csdnimg.cn/direct/51be0a95766f4ff79a15df100412b13c.png" alt="在这里插入图片描述"><br>&emsp;&emsp;&emsp;现在：<strong>在vv所在的栈帧销毁之前将其指向的资源夺走</strong>，交给ret。</p>
+<p><img src="https://i-blog.csdnimg.cn/direct/de080f3e04924a2a913fb75bf27d2f63.png" alt="在这里插入图片描述"></p>
+<p>&emsp;&emsp;&emsp;<strong>调试观察这一过程：</strong></p>
+<p><img src="https://i-blog.csdnimg.cn/direct/e0e1c0aab9eb4d9f948fd45577bce7b0.png" alt="在这里插入图片描述"></p>
+<p><img src="https://i-blog.csdnimg.cn/direct/70f7c206188c4cf5977094f7bf0bc572.png" alt="在这里插入图片描述"></p>
+<blockquote>
+<p>&emsp;&emsp;&emsp;<strong>谨慎：</strong> 不要轻易给左值move，move（左值）就相当与让左值拥有了可以被夺走数据的权力.</p>
+</blockquote>
+<h2 id="3-5移动语义在传参中的提效"><a href="#3-5移动语义在传参中的提效" class="headerlink" title="3.5移动语义在传参中的提效"></a>3.5移动语义在传参中的提效</h2><p>&emsp;&emsp;&emsp;查看STL文档我们发现C++11以后容器的push和insert系列的接口<strong>都增加的右值引用版本。</strong></p>
+<blockquote>
+<ol start="2">
+<li>当实参是一个左值时，<strong>容器内部继续调用拷贝构造进行拷贝</strong>，将对象拷贝到容器空间中的对象。</li>
+<li>当实参是一个右值，<strong>容器内部则调用移动构造</strong>，右值对象的资源到容器空间的对象上。</li>
+</ol>
+</blockquote>
+<p>&emsp;&emsp;&emsp;把我们之前模拟实现的bit::list拷贝过来，<strong>实现一下支持右值引用参数版本的push_back和insert。</strong></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">push_back</span><span class="params">(T&amp;&amp; x)</span></span>&#123; <span class="built_in">insert</span>(<span class="built_in">end</span>(), <span class="built_in">move</span>(x));&#125;</span><br><span class="line"> <span class="function">iterator <span class="title">insert</span><span class="params">(iterator pos, T&amp;&amp; x)</span> </span>&#123;</span><br><span class="line">     Node* cur = pos._node;</span><br><span class="line">     Node* newnode = <span class="keyword">new</span> <span class="built_in">Node</span>(<span class="built_in">move</span>(x));</span><br><span class="line">     Node* prev = cur-&gt;_prev;</span><br><span class="line">     prev-&gt;_next = newnode;</span><br><span class="line">     newnode-&gt;_prev = prev;</span><br><span class="line">     newnode-&gt;_next = cur;</span><br><span class="line">     cur-&gt;_prev = newnode;</span><br><span class="line">     <span class="keyword">return</span> <span class="built_in">iterator</span>(newnode);</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>&emsp;&emsp;&emsp;其实这里还有一个emplace系列的接口，<strong>但是这个涉及可变参数模板</strong>，我放在可变参数模版那里讲了。</p>
+</blockquote>
+<h1 id="四，当编译器优化遇上移动构造——是雪中送炭还是锦上添花？"><a href="#四，当编译器优化遇上移动构造——是雪中送炭还是锦上添花？" class="headerlink" title="四，当编译器优化遇上移动构造——是雪中送炭还是锦上添花？"></a>四，当编译器优化遇上移动构造——是雪中送炭还是锦上添花？</h1><p><img src="https://i-blog.csdnimg.cn/direct/e80f453fd0fb45878b98f1ce3a3e61e2.png" alt="在这里插入图片描述"></p>
+<h2 id="4-1右值对象构造，只有拷贝构造，没有移动构造的场景"><a href="#4-1右值对象构造，只有拷贝构造，没有移动构造的场景" class="headerlink" title="4.1右值对象构造，只有拷贝构造，没有移动构造的场景"></a>4.1右值对象构造，只有拷贝构造，没有移动构造的场景</h2><p>&emsp;&emsp;&emsp;图1展示了vs2019 debug环境下编译器对拷贝的优化，<strong>左边为不优化的情况下</strong>，两次拷贝构造，右边为编译器优化的场景下连续步骤中的<strong>拷贝合二为一</strong>变为一次拷贝构造。<br>&emsp;&emsp;&emsp;需要注意的是在vs2019的release和vs2022的debug和release，下面代码优化为非常恐怖，会直接将str对象的构造，str拷贝构造临时对象，临时对象拷贝构造ret对象，<strong>合三为一，变为直接构造。要理解这个优化要结合局部对象生命周期和栈帧的角度理解，如图3（4.2的第二张图）所示。</strong><br>&emsp;&emsp;&emsp;linux下可以将下面代码拷贝到test.cpp文件，编译时用 <code>g++ test.cpp -fno-elide-constructors</code> 的方式关闭构造优化，<strong>运行结果可以看到图1左边没有优化的两次拷贝。</strong></p>
+<p><img src="https://i-blog.csdnimg.cn/direct/65bc23bfbbc8403a80de2f3eb2c3609a.png" alt="在这里插入图片描述"></p>
+<h2 id="4-2右值对象构造，有拷贝构造，也有移动构造的场景"><a href="#4-2右值对象构造，有拷贝构造，也有移动构造的场景" class="headerlink" title="4.2右值对象构造，有拷贝构造，也有移动构造的场景"></a>4.2右值对象构造，有拷贝构造，也有移动构造的场景</h2><p>&emsp;&emsp;&emsp;图2展示了vs2019 debug环境下编译器对拷贝的优化，<strong>左边为不优化的情况下，两次移动构造</strong>，右边为编译器优化的场景下连续步骤中的拷贝合<strong>二为一变为一次移动构造</strong>。<br>&emsp;&emsp;&emsp;需要注意的是在vs2019的release和vs2022的debug和release，下面代码优化为非常恐怖，会直接将str对象的构造，str拷贝构造临时对象，临时对象拷贝构造ret对象，<strong>合三为一，变为直接构造</strong>。要理解这个优化要结合局部对象生命周期和栈帧的角度理解，如图2（4.2的第二张图）所示。<br>&emsp;&emsp;&emsp;linux下可以将下面代码拷贝到test.cpp文件，编译时用 <code>g++ test.cpp -fno-elide-constructors </code> 的方式关闭构造优化，运行结果可以看到图1左边没有优化的两次移动。</p>
+<p><img src="https://i-blog.csdnimg.cn/direct/6e66b16c7d3d4038ac907969c0149935.png" alt="在这里插入图片描述"><br><img src="https://i-blog.csdnimg.cn/direct/b5f22d2bb74740ffb9a6d9aeb9e52f66.png" alt="在这里插入图片描述"></p>
+<h2 id="4-3右值对象赋值，只有拷贝构造和拷贝赋值，没有移动构造和移动赋值的场景"><a href="#4-3右值对象赋值，只有拷贝构造和拷贝赋值，没有移动构造和移动赋值的场景" class="headerlink" title="4.3右值对象赋值，只有拷贝构造和拷贝赋值，没有移动构造和移动赋值的场景"></a>4.3右值对象赋值，只有拷贝构造和拷贝赋值，没有移动构造和移动赋值的场景</h2><p>&emsp;&emsp;&emsp;图4左边展示了vs2019 debug和 <code>g++ test.cpp -fno-elide-constructors</code> 关闭优化环境下编译器的处理，<strong>一次拷贝构造，一次拷贝赋值。</strong><br>&emsp;&emsp;&emsp;需要注意的是在vs2019的release和vs2022的debug和release，下面代码会进一步优化，<strong>直接构造要返回的临时对象</strong>，str本质是临时对象的引用，底层角度用指针实现。运行结果的角度，我们可以看到str的析构是在赋值以后，说明str就是临时对象的别名。</p>
+<p><img src="https://i-blog.csdnimg.cn/direct/1b457ed69ed3402ebd0c5148d27a7d6d.png" alt="在这里插入图片描述"></p>
+<h2 id="4-4右值对象赋值，既有拷贝构造和拷贝赋值，也有移动构造和移动赋值的场景"><a href="#4-4右值对象赋值，既有拷贝构造和拷贝赋值，也有移动构造和移动赋值的场景" class="headerlink" title="4.4右值对象赋值，既有拷贝构造和拷贝赋值，也有移动构造和移动赋值的场景"></a>4.4右值对象赋值，既有拷贝构造和拷贝赋值，也有移动构造和移动赋值的场景</h2><p>&emsp;&emsp;&emsp;图5左边展示了vs2019 debug和<code> g++ test.cpp -fno-elide-constructors</code> 关闭优化环境下编译器的处理，<strong>一次移动构造，一次移动赋值。</strong><br>&emsp;&emsp;&emsp;需要注意的是在vs2019的release和vs2022的debug和release，下面代码会进一步优化，<strong>直接构造要返回的临时对象</strong>，str本质是临时对象的引用，底层角度用指针实现。运行结果的角度，<strong>我们可以看到str的析构是在赋值以后，说明str就是临时对象的别名。</strong></p>
+<p><img src="https://i-blog.csdnimg.cn/direct/9aadade00e474f718103ad07bd4dc45e.png" alt="在这里插入图片描述"></p>
+<h2 id="4-5总结结论"><a href="#4-5总结结论" class="headerlink" title="4.5总结结论"></a>4.5总结结论</h2><p>&emsp;&emsp;&emsp;看完上文后可能有人会问：那么拷贝构造的和移动构造的这两种情况都是<b>和三位一, 看起来拷贝构造的场景和移动构造的场景没有什么区别啊？</b></p>
+<blockquote>
+<p>&emsp;&emsp;&emsp;但是，问题就在于：<strong>不是所有的公司的编译器都会做这么激进的优化。所以移动构造还是比拷贝构造好的。</strong></p>
+</blockquote>
+<p>&emsp;&emsp;&emsp;<strong>好的，我们来做一个总结：</strong></p>
+<ol>
+<li><p>深拷贝的自定义类型：如vector&#x2F;string&#x2F;map….。实现移动构造和移动赋值是有很大的价值的<code>编译器的优化是移动语义的锦上添花</code>。</p>
+</li>
+<li><p>浅拷贝的自定义类型：如Date&#x2F;pair&lt;int, int&gt;…。不需要实现移动构造和移动赋值是有意义的<code>但是这里的时候，编译器的优化不再是移动语义的锦上添花</code>。</p>
+</li>
+</ol>
+<h1 id="五，C-对左值右值类型进行的分类"><a href="#五，C-对左值右值类型进行的分类" class="headerlink" title="五，C++对左值右值类型进行的分类"></a>五，C++对左值右值类型进行的分类</h1><ul>
+<li>C++11 以后，进一步对类型进行了划分，右值被划分<strong>纯右值（pure value，简称 prvalue）和将亡值（expiring value，简称 xvalue）。</strong></li>
+<li>纯右值是指那些字面值常量或求值结果相当于<strong>字面值或是一个不具名的临时对象</strong>。如：42、true、nullptr，或者类似 str.substr(1, 2)、str1 + str2（传值返回函数调用），或者整形 a、b、a++、a+b 等。</li>
+<li>纯右值和将亡值是 C++11 中提出的，C++11 中的纯右值概念划分等价于 C++98 中的右值。</li>
+<li>将亡值是指返回右值引用的函数的调用表达式和转换为右值引用的转换函数的调用表达式，如：move(x)、static_cast&lt;X&amp;&amp;&gt;(x)</li>
+<li><strong>泛左值（generalized value，简称 glvalue），泛左值包含将亡值和左值。</strong></li>
+</ul>
+<p><img src="https://i-blog.csdnimg.cn/direct/8a23275224a84b61870b148138beae28.png" alt="在这里插入图片描述"></p>
+<p>&emsp;&emsp;&emsp;这里不是很重要了解一下即可，<strong>我用一张Excel表格整理出来：</strong> 也可以去官方文档中查阅更加细节的东西。</p>
+<blockquote>
+<p><strong>文档传送门</strong>：<a target="_blank" rel="noopener" href="https://zh.cppreference.com/w/cpp/language/value_category">cppreference.com-Value categories</a></p>
+</blockquote>
+<p><img src="https://i-blog.csdnimg.cn/direct/77f62399c11e4b6aa160545cb5b09ad2.png" alt="在这里插入图片描述"></p>
+<h1 id="六，引用折叠——引用中的引用"><a href="#六，引用折叠——引用中的引用" class="headerlink" title="六，引用折叠——引用中的引用"></a>六，引用折叠——引用中的引用</h1><h2 id="6-1什么是引用折叠"><a href="#6-1什么是引用折叠" class="headerlink" title="6.1什么是引用折叠"></a>6.1什么是引用折叠</h2><blockquote>
+<p>&emsp;&emsp;&emsp;<strong>定义：</strong> 在 C++ 中，引用折叠是指当编译器在模板推导或类型别名等场景下遇到“引用的引用”时，<strong>将其合并为单一引用的逻辑规则</strong></p>
+</blockquote>
+<h3 id="6-1-1用typedef写一个引用折叠"><a href="#6-1-1用typedef写一个引用折叠" class="headerlink" title="6.1.1用typedef写一个引用折叠"></a>6.1.1用typedef写一个引用折叠</h3><p>&emsp;&emsp;&emsp;C++中<strong>不能直接定义引用的引用如 int&amp; &amp;&amp; r &#x3D; i;</strong> ，这样写会直接报错，通过模板或 typedef 中的类型操作可以构成引用的引用。<strong>例如：</strong></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> i=<span class="number">0</span>;</span><br><span class="line"><span class="keyword">typedef</span> <span class="type">int</span>&amp;&amp; rref;</span><br><span class="line">rref&amp; r1 = i;  <span class="comment">// r1 的类型是 int&amp;</span></span><br></pre></td></tr></table></figure>
+
+<p>&emsp;&emsp;&emsp;通过模板或 typedef 中的类型操作<strong>可以构成引用的引用</strong> C++11给出了一个<strong>引用折叠的规则</strong>：右值引用的右值引用折叠成右值引用，所有其他组合均折叠成左值引用。(<font color ="red"><b>有左则左，全右则右</font>)</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">	<span class="keyword">typedef</span> <span class="type">int</span>&amp; lref;</span><br><span class="line">	<span class="keyword">typedef</span> <span class="type">int</span>&amp;&amp; rref;</span><br><span class="line">	</span><br><span class="line">	<span class="type">int</span> n = <span class="number">0</span>;</span><br><span class="line">	</span><br><span class="line">	lref&amp; r1 = n;  <span class="comment">// r1 的类型是 int&amp;</span></span><br><span class="line">	lref&amp;&amp; r2 = n; <span class="comment">// r2 的类型是 int&amp;</span></span><br><span class="line">	rref&amp; r3 = n;  <span class="comment">// r3 的类型是 int&amp;</span></span><br><span class="line">	rref&amp;&amp; r4 = n; <span class="comment">// r4 的类型是 int&amp;&amp;</span></span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="6-1-1模板中的引用折叠"><a href="#6-1-1模板中的引用折叠" class="headerlink" title="6.1.1模板中的引用折叠"></a>6.1.1模板中的引用折叠</h3><p>&emsp;&emsp;&emsp;<strong>模板亦是如此：</strong></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 由于引用折叠限定，f1实例化以后总是一个左值引用</span></span><br><span class="line"><span class="function"><span class="keyword">template</span></span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">f1</span><span class="params">(T&amp; x)</span></span></span><br><span class="line"><span class="function"></span>&#123;&#125;</span><br><span class="line"><span class="comment">// 由于引用折叠限定，f2实例化后可以是左值引用，也可以是右值引用</span></span><br><span class="line"><span class="function"><span class="keyword">template</span></span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">f2</span><span class="params">(T&amp;&amp; x)</span></span></span><br><span class="line"><span class="function"></span>&#123;&#125;</span><br></pre></td></tr></table></figure>
+
+
+<ul>
+<li>像f2这样的函数模板中，<code>T&amp;&amp; x</code>参数看起来是右值引用参数，但是由于引用折叠的规则，他<strong>传递左值时就是左值引用，传递右值时就是右值引用</strong>，有些地方也把这种函数模板的参数叫做<code>万能引用</code>。</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> n = <span class="number">0</span>;</span><br><span class="line"><span class="comment">// 没有折叠-&gt;实例化为void f1(int&amp; x)</span></span><br><span class="line"><span class="built_in">f1</span>&lt;<span class="type">int</span>&gt;(n);</span><br><span class="line"><span class="built_in">f1</span>&lt;<span class="type">int</span>&gt;(<span class="number">0</span>);  <span class="comment">// 报错</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 折叠-&gt;实例化为void f1(int&amp; x)</span></span><br><span class="line"><span class="built_in">f1</span>&lt;<span class="type">int</span>&amp;&amp;&gt;(n);</span><br><span class="line"><span class="built_in">f1</span>&lt;<span class="type">int</span>&amp;&amp;&gt;(<span class="number">0</span>); <span class="comment">// 报错</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 折叠-&gt;实例化为void f1(int&amp; x)</span></span><br><span class="line"><span class="built_in">f1</span>&lt;<span class="type">int</span>&amp;&amp;&gt;(n);</span><br><span class="line"><span class="built_in">f1</span>&lt;<span class="type">int</span>&amp;&amp;&gt;(<span class="number">0</span>); <span class="comment">// 报错</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 折叠-&gt;实例化为void f1(const int&amp; x)</span></span><br><span class="line"><span class="built_in">f1</span>&lt;<span class="type">const</span> <span class="type">int</span>&amp;&gt;(n);</span><br><span class="line"><span class="built_in">f1</span>&lt;<span class="type">const</span> <span class="type">int</span>&amp;&gt;(<span class="number">0</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 折叠-&gt;实例化为void f1(const int&amp; x)</span></span><br><span class="line"><span class="built_in">f1</span>&lt;<span class="type">const</span> <span class="type">int</span>&amp;&amp;&gt;(n);</span><br><span class="line"></span><br><span class="line"><span class="built_in">f1</span>&lt;<span class="type">const</span> <span class="type">int</span>&amp;&amp;&gt;(<span class="number">0</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 没有折叠-&gt;实例化为void f2(int&amp;&amp; x)</span></span><br><span class="line"><span class="built_in">f2</span>&lt;<span class="type">int</span>&gt;(n);   <span class="comment">// 报错</span></span><br><span class="line"><span class="built_in">f2</span>&lt;<span class="type">int</span>&gt;(<span class="number">0</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 折叠-&gt;实例化为void f2(int&amp; x)</span></span><br><span class="line"><span class="built_in">f2</span>&lt;<span class="type">int</span>&amp;&amp;&gt;(n);</span><br><span class="line"><span class="built_in">f2</span>&lt;<span class="type">int</span>&amp;&amp;&gt;(<span class="number">0</span>); <span class="comment">// 报错</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 折叠-&gt;实例化为void f2(int&amp;&amp; x)</span></span><br><span class="line"><span class="built_in">f2</span>&lt;<span class="type">int</span>&amp;&amp;&gt;(n); <span class="comment">// 报错</span></span><br><span class="line"><span class="built_in">f2</span>&lt;<span class="type">int</span>&amp;&amp;&gt;(<span class="number">0</span>);</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="6-2引用折叠的目的"><a href="#6-2引用折叠的目的" class="headerlink" title="6.2引用折叠的目的"></a>6.2引用折叠的目的</h2><p>&emsp;&emsp;&emsp;<strong>下面的Function(T&amp;&amp; t)函数模板程序中：</strong></p>
+<ol>
+<li>假设实参是int右值，模板参数T的推导<strong>int。</strong></li>
+<li>实参是int左值，模板参数T的推导<strong>int&amp;。</strong></li>
+</ol>
+<p>&emsp;&emsp;&emsp;再结合引用折叠规则，就实现了<strong>实参是左值，实例化出左值引用版本</strong>形参的 Function，<strong>实参是右值，实例化出右值引用版本形参</strong>的Function。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> T&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">Function</span><span class="params">(T&amp;&amp; t)</span></span>&#123;</span><br><span class="line">    <span class="type">int</span> a = <span class="number">0</span>;</span><br><span class="line">    T x = t;</span><br><span class="line">    <span class="comment">//x++;</span></span><br><span class="line">    cout &lt;&lt; &amp;a &lt;&lt; endl;</span><br><span class="line">    cout &lt;&lt; &amp;x &lt;&lt; endl &lt;&lt; endl;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// 10是右值，推导出T为int，模板实例化为void Function(int&amp;&amp; t)</span></span><br><span class="line">    <span class="built_in">Function</span>(<span class="number">10</span>);          <span class="comment">// 右值</span></span><br><span class="line"></span><br><span class="line">    <span class="type">int</span> a;</span><br><span class="line">    <span class="comment">// a是左值，推导出T为int&amp;，引用折叠，模板实例化为void Function(int&amp; t)</span></span><br><span class="line">    <span class="built_in">Function</span>(a);           <span class="comment">// 左值</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// std::move(a)是右值，推导出T为int，模板实例化为void Function(int&amp;&amp; t)</span></span><br><span class="line">    <span class="built_in">Function</span>(std::<span class="built_in">move</span>(a));   <span class="comment">// 右值</span></span><br><span class="line">		<span class="comment">//引用折叠不会丢const属性</span></span><br><span class="line">    <span class="type">const</span> <span class="type">int</span> b = <span class="number">8</span>;</span><br><span class="line">    <span class="comment">// a是左值，推导出T为const int&amp;，引用折叠，模板实例化为void Function(const int&amp; t)</span></span><br><span class="line">    <span class="comment">// 所以Function内部会编译报错，x不能++</span></span><br><span class="line">    <span class="built_in">Function</span>(b);              <span class="comment">// const 左值</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// std::move(b)右值，推导出T为const int，模板实例化为void Function(const int&amp;&amp; t)</span></span><br><span class="line">    <span class="comment">// 所以Function内部会编译报错，x不能++</span></span><br><span class="line">    	<span class="comment">//右值引用本事是左值属性可以修改，但是现在加上const也不能修改了</span></span><br><span class="line">    <span class="built_in">Function</span>(std::<span class="built_in">move</span>(b));   <span class="comment">// const 右值</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>&emsp;&emsp;&emsp;于是不难看出来<strong>引用折叠被设计出来的目的是：</strong> 减少代码量，不需要我们手动实现出左值引用和右值引用的两种版本的代码。</p>
+</blockquote>
+<p>&emsp;&emsp;&emsp;<strong>瞄一眼库里面的万能引用，我们结束这个部分</strong>（现在暂时不讲）</p>
+<p><img src="https://i-blog.csdnimg.cn/direct/cc0a8b950e224029b841f61506df7d3f.png" alt="在这里插入图片描述"></p>
+<h1 id="七，完美转发——解决右值引用属性异化问题"><a href="#七，完美转发——解决右值引用属性异化问题" class="headerlink" title="七，完美转发——解决右值引用属性异化问题"></a>七，完美转发——解决右值引用属性异化问题</h1><h2 id="7-1右值引用属性异化"><a href="#7-1右值引用属性异化" class="headerlink" title="7.1右值引用属性异化"></a>7.1右值引用属性异化</h2><blockquote>
+<p><strong>右值引用属性异化问题：</strong><br>&emsp;&emsp;&emsp;这是一个非官方的命名，简而言之就是<strong>右值引用变量表达式的属性是左值。</strong> 当我们想要将这个值继续往下传递的时候，就会发生属性异化。我们举一个例子就明白了：</p>
+</blockquote>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">Fun</span><span class="params">(<span class="type">int</span>&amp; x)</span> </span>&#123; cout &lt;&lt; <span class="string">&quot;左值引用&quot;</span> &lt;&lt; endl; &#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">Fun</span><span class="params">(<span class="type">const</span> <span class="type">int</span>&amp; x)</span> </span>&#123; cout &lt;&lt; <span class="string">&quot;const 左值引用&quot;</span> &lt;&lt; endl; &#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">Fun</span><span class="params">(<span class="type">int</span>&amp;&amp; x)</span> </span>&#123; cout &lt;&lt; <span class="string">&quot;右值引用&quot;</span> &lt;&lt; endl; &#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">Fun</span><span class="params">(<span class="type">const</span> <span class="type">int</span>&amp;&amp; x)</span> </span>&#123; cout &lt;&lt; <span class="string">&quot;const 右值引用&quot;</span> &lt;&lt; endl; &#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> T&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">Function</span><span class="params">(T&amp;&amp; t)</span></span>&#123; <span class="built_in">Fun</span>(t);&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// 10是右值，推导出T为int，模板实例化为void Function(int&amp;&amp; t)</span></span><br><span class="line">    <span class="built_in">Function</span>(<span class="number">10</span>);<span class="comment">// 右值</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<ul>
+<li><p>Function(T&amp;&amp; t)函数模板程序中，传左值实例化以后是左值引用的Function函数，传右值实例化以后是右值引用的Function函数。</p>
+</li>
+<li><p>但是变量表达式都是左值属性，也就意味着一个右值被右值引用绑定后，<strong>右值引用变量表达式的属性是左值</strong>，也就是说Function函数中t的属性是左值，那么我们把t传递给下一层函数Fun，<strong>那么匹配的都是左值引用版本的Fun函数。</strong></p>
+</li>
+</ul>
+<blockquote>
+<p><font color ="red">&emsp;&emsp;&emsp;<strong>有人说，这太bug了，有没有好的解决方案？于是C++委员会发明了完美转发</strong></p>
+</blockquote>
+<h2 id="7-2完美转发如何解决二次传递问题"><a href="#7-2完美转发如何解决二次传递问题" class="headerlink" title="7.2完美转发如何解决二次传递问题"></a>7.2完美转发如何解决二次传递问题</h2><blockquote>
+<p><strong>完美转发：</strong><br>&emsp;&emsp;&emsp;完美转发是指在模板编程中，<strong>通过 T&amp;&amp; 和 std::forward 的配合</strong>，将参数原封不动地传递给下一个函数，<strong>确保参数的左值&#x2F;右值属性在传递过程中不丢失。</strong></p>
+</blockquote>
+<p><img src="https://i-blog.csdnimg.cn/direct/19f5cb3749d04243a57c8f38d794d3a7.png" alt="在这里插入图片描述"></p>
+<blockquote>
+<p>&emsp;&emsp;&emsp;<strong>传递左值，模板推导为int&amp;，传递右值模板推导为int，forward看到int&amp;，返回左值，看到int，返回右值。</strong></p>
+</blockquote>
+<p>&emsp;&emsp;&emsp;<strong>完美转发forward本质是一个函数模板</strong>，他主要还是通过<strong>引用折叠的方式</strong>实现，下面示例中</p>
+<ul>
+<li>传递给Function的实参是右值，T被推导为int，没有折叠，forward内部t被强转为右值引用返回；</li>
+<li>传递给Function的实参是左值，T被推导为int&amp;，引用折叠为左值引用，forward内部t被强转为左值引用返回。</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">class</span> <span class="title class_">_Ty</span>&gt;</span><br><span class="line"><span class="function">_Ty&amp;&amp; <span class="title">forward</span><span class="params">(<span class="type">remove_reference_t</span>&lt;_Ty&gt;&amp; _Arg)</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// forward an lvalue as either an lvalue or an rvalue</span></span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">static_cast</span>&lt;_Ty&amp;&amp;&gt;(_Arg);</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">Fun</span><span class="params">(<span class="type">int</span>&amp; x)</span> </span>&#123; cout &lt;&lt; <span class="string">&quot;左值引用&quot;</span> &lt;&lt; endl; &#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">Fun</span><span class="params">(<span class="type">const</span> <span class="type">int</span>&amp; x)</span> </span>&#123; cout &lt;&lt; <span class="string">&quot;const 左值引用&quot;</span> &lt;&lt; endl; &#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">Fun</span><span class="params">(<span class="type">int</span>&amp;&amp; x)</span> </span>&#123; cout &lt;&lt; <span class="string">&quot;右值引用&quot;</span> &lt;&lt; endl; &#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">Fun</span><span class="params">(<span class="type">const</span> <span class="type">int</span>&amp;&amp; x)</span> </span>&#123; cout &lt;&lt; <span class="string">&quot;const 右值引用&quot;</span> &lt;&lt; endl; &#125;</span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> T&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">Function</span><span class="params">(T&amp;&amp; t)</span></span>&#123; <span class="built_in">Fun</span>(forward&lt;T&gt;(t));&#125;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// 10是右值，推导出T为int，模板实例化为void Function(int&amp;&amp; t)</span></span><br><span class="line">    <span class="built_in">Function</span>(<span class="number">10</span>);        <span class="comment">// 右值</span></span><br><span class="line">    <span class="type">int</span> a;</span><br><span class="line">    <span class="comment">// a是左值，推导出T为int&amp;，引用折叠，模板实例化为void Function(int&amp; t)</span></span><br><span class="line">    <span class="built_in">Function</span>(a);         <span class="comment">// 左值</span></span><br><span class="line">    <span class="comment">// std::move(a)是右值，推导出T为int，模板实例化为void Function(int&amp;&amp; t)</span></span><br><span class="line">    <span class="built_in">Function</span>(std::<span class="built_in">move</span>(a));   <span class="comment">// 右值</span></span><br><span class="line">    <span class="type">const</span> <span class="type">int</span> b = <span class="number">8</span>;</span><br><span class="line">    <span class="comment">// a是左值，推导出T为const int&amp;，引用折叠，模板实例化为void Function(const int&amp; t)</span></span><br><span class="line">    <span class="built_in">Function</span>(b);              <span class="comment">// const 左值</span></span><br><span class="line">    <span class="comment">// std::move(b)右值，推导出T为const int，模板实例化为void Function(const int&amp;&amp; t)</span></span><br><span class="line">    <span class="built_in">Function</span>(std::<span class="built_in">move</span>(b));   <span class="comment">// const 右值</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<hr>
+<center><b>好了，本期内容到此结束，我是此方，我们下期再见。バイバイ！
+
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://ZhouBaoChuan049.github.io">小此方</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://zhoubaochuan049.github.io/posts/cpp11-move-semantics.html">https://zhoubaochuan049.github.io/posts/cpp11-move-semantics.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://ZhouBaoChuan049.github.io" target="_blank">此方の空中花园</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/C/">C++</a><a class="post-meta__tags" href="/tags/C-11/">C++11</a></div><div class="post-share"><div class="social-share" data-image="/img/MorernCpp02.png" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related full-width no-desc" href="/posts/undefined.html" title="MyFirstGarden"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">MyFirstGarden</div></div></div></a></nav></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">小此方</div><div class="author-info-description">关于算法、C++、Linux与此方的随笔</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">2</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">2</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">1</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xxxxxx"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">This is my Blog</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%A6%82%E8%A6%81-%E5%BA%8F%E8%AB%96"><span class="toc-text">概要&amp;序論</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%80%EF%BC%8CC-11%E5%90%8E%E7%9A%84%E6%A6%82%E5%BF%B5%E6%89%A9%E5%B1%95%EF%BC%9A%E5%B7%A6%E5%80%BC%E4%B8%8E%E5%8F%B3%E5%80%BC"><span class="toc-text">一，C++11后的概念扩展：左值与右值</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-1%E5%B7%A6%E5%80%BC%E7%9A%84%E5%AE%9A%E4%B9%89%E3%80%81%E5%88%A4%E6%96%AD%E4%BE%9D%E6%8D%AE%E4%B8%8E%E4%B8%BE%E4%BE%8B"><span class="toc-text">1.1左值的定义、判断依据与举例</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-2%E5%8F%B3%E5%80%BC%E7%9A%84%E5%AE%9A%E4%B9%89%E3%80%81%E5%88%A4%E6%96%AD%E4%BE%9D%E6%8D%AE%E4%B8%8E%E4%B8%BE%E4%BE%8B"><span class="toc-text">1.2右值的定义、判断依据与举例</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%8C%EF%BC%8C%E5%B7%A6%E5%80%BC%E5%BC%95%E7%94%A8%E5%92%8C%E5%8F%B3%E5%80%BC%E5%BC%95%E7%94%A8"><span class="toc-text">二，左值引用和右值引用</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#2-1%E5%B7%A6%E5%80%BC%E5%BC%95%E7%94%A8%E5%92%8C%E5%8F%B3%E5%80%BC%E5%BC%95%E7%94%A8%E7%9A%84%E5%AE%9A%E4%B9%89"><span class="toc-text">2.1左值引用和右值引用的定义</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-2%E5%B7%A6%E5%8F%B3%E5%80%BC%E5%BC%95%E7%94%A8%E4%BA%A4%E5%8F%89"><span class="toc-text">2.2左右值引用交叉</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-1%E5%B7%A6%E5%80%BC%E5%BC%95%E7%94%A8%E6%89%93%E7%A0%B4%E8%A7%84%E5%88%99%E7%9A%84%E6%96%B9%E6%B3%95%E2%80%94%E2%80%94const-%E5%B7%A6%E5%80%BC%E5%BC%95%E7%94%A8"><span class="toc-text">2.2.1左值引用打破规则的方法——const 左值引用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-2%E5%8F%B3%E5%80%BC%E5%BC%95%E7%94%A8%E6%89%93%E7%A0%B4%E8%A7%84%E5%88%99%E7%9A%84%E6%96%B9%E6%B3%95%E2%80%94%E2%80%94move-%E5%B7%A6%E5%80%BC"><span class="toc-text">2.2.2右值引用打破规则的方法——move 左值</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-3%E5%8F%B3%E5%80%BC%E5%BC%95%E7%94%A8%E7%BB%91%E5%AE%9A%E5%8F%B3%E5%80%BC%E5%90%8E%E5%BC%95%E5%8F%91%E7%9A%84%E4%B8%80%E7%B3%BB%E5%88%97%E9%97%AE%E9%A2%98"><span class="toc-text">2.3右值引用绑定右值后引发的一系列问题</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-3-1%E5%8F%B3%E5%80%BC%E5%88%AB%E5%90%8D%E8%8E%B7%E6%9D%83%E4%BF%AE%E6%94%B9%E5%8F%B3%E5%80%BC"><span class="toc-text">2.3.1右值别名获权修改右值</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-3-2%E5%8F%B3%E5%80%BC%E5%88%AB%E5%90%8D%E5%BB%B6%E9%95%BF%E5%8F%B3%E5%80%BC%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F"><span class="toc-text">2.3.2右值别名延长右值生命周期</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-4%E5%8F%B3%E5%80%BC%E5%BC%95%E7%94%A8%E4%B8%8E%E5%B7%A6%E5%80%BC%E5%BC%95%E7%94%A8%E7%9A%84%E5%BA%95%E5%B1%82%E4%B8%80%E8%87%B4"><span class="toc-text">2.4右值引用与左值引用的底层一致</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-5%E5%B7%A6%E5%80%BC%E4%B8%8E%E5%8F%B3%E5%80%BC%E7%9A%84%E5%8F%82%E6%95%B0%E5%8C%B9%E9%85%8D"><span class="toc-text">2.5左值与右值的参数匹配</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%89%EF%BC%8C%E7%A7%BB%E5%8A%A8%E8%AF%AD%E4%B9%89%E7%9A%84%E5%AE%9A%E4%B9%89%E4%B8%8E%E6%84%8F%E4%B9%89"><span class="toc-text">三，移动语义的定义与意义</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#3-1%E7%A7%BB%E5%8A%A8%E8%AF%AD%E4%B9%89%E4%B8%BA%E4%BD%95%E5%87%BA%E7%8E%B0"><span class="toc-text">3.1移动语义为何出现</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-1C-11%E5%89%8D%E8%BF%94%E5%9B%9E%E5%80%BC%E5%9C%BA%E6%99%AF%E7%9A%84%E6%82%96%E8%AE%BA"><span class="toc-text">3.1.1C++11前返回值场景的悖论</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-2%E7%A7%BB%E5%8A%A8%E8%AF%AD%E4%B9%89%E7%9A%84%E5%AE%9A%E4%B9%89%E2%80%94%E2%80%94%E4%BB%8E%E6%8B%B7%E8%B4%9D%E5%88%B0%E5%89%AA%E5%88%87"><span class="toc-text">3.2移动语义的定义——从拷贝到剪切</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-3%E7%A7%BB%E5%8A%A8%E8%AF%AD%E4%B9%89%E7%9A%84%E4%B8%A4%E5%A4%A7%E5%9F%BA%E7%9F%B3%E5%85%B6%E4%B9%8B%E4%BA%8C%EF%BC%9A%E7%A7%BB%E5%8A%A8%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0%E5%92%8C%E7%A7%BB%E5%8A%A8%E8%B5%8B%E5%80%BC%E8%BF%90%E7%AE%97%E7%AC%A6"><span class="toc-text">3.3移动语义的两大基石其之二：移动构造函数和移动赋值运算符</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-3-1%E4%BB%80%E4%B9%88%E6%98%AF%E7%A7%BB%E5%8A%A8%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0%E5%92%8C%E7%A7%BB%E5%8A%A8%E8%B5%8B%E5%80%BC%E8%BF%90%E7%AE%97%E7%AC%A6%E9%87%8D%E8%BD%BD"><span class="toc-text">3.3.1什么是移动构造函数和移动赋值运算符重载</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-3-2%E7%A7%BB%E5%8A%A8%E6%9E%84%E9%80%A0%E5%92%8C%E7%A7%BB%E5%8A%A8%E8%B5%8B%E5%80%BC%E7%9A%84%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0"><span class="toc-text">3.3.2移动构造和移动赋值的代码实现</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-4%E7%A7%BB%E5%8A%A8%E8%AF%AD%E4%B9%89%E8%A7%A3%E5%86%B3%E8%BF%94%E5%9B%9E%E5%80%BC%E5%9C%BA%E6%99%AF%E9%97%AE%E9%A2%98"><span class="toc-text">3.4移动语义解决返回值场景问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-5%E7%A7%BB%E5%8A%A8%E8%AF%AD%E4%B9%89%E5%9C%A8%E4%BC%A0%E5%8F%82%E4%B8%AD%E7%9A%84%E6%8F%90%E6%95%88"><span class="toc-text">3.5移动语义在传参中的提效</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%9B%9B%EF%BC%8C%E5%BD%93%E7%BC%96%E8%AF%91%E5%99%A8%E4%BC%98%E5%8C%96%E9%81%87%E4%B8%8A%E7%A7%BB%E5%8A%A8%E6%9E%84%E9%80%A0%E2%80%94%E2%80%94%E6%98%AF%E9%9B%AA%E4%B8%AD%E9%80%81%E7%82%AD%E8%BF%98%E6%98%AF%E9%94%A6%E4%B8%8A%E6%B7%BB%E8%8A%B1%EF%BC%9F"><span class="toc-text">四，当编译器优化遇上移动构造——是雪中送炭还是锦上添花？</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#4-1%E5%8F%B3%E5%80%BC%E5%AF%B9%E8%B1%A1%E6%9E%84%E9%80%A0%EF%BC%8C%E5%8F%AA%E6%9C%89%E6%8B%B7%E8%B4%9D%E6%9E%84%E9%80%A0%EF%BC%8C%E6%B2%A1%E6%9C%89%E7%A7%BB%E5%8A%A8%E6%9E%84%E9%80%A0%E7%9A%84%E5%9C%BA%E6%99%AF"><span class="toc-text">4.1右值对象构造，只有拷贝构造，没有移动构造的场景</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-2%E5%8F%B3%E5%80%BC%E5%AF%B9%E8%B1%A1%E6%9E%84%E9%80%A0%EF%BC%8C%E6%9C%89%E6%8B%B7%E8%B4%9D%E6%9E%84%E9%80%A0%EF%BC%8C%E4%B9%9F%E6%9C%89%E7%A7%BB%E5%8A%A8%E6%9E%84%E9%80%A0%E7%9A%84%E5%9C%BA%E6%99%AF"><span class="toc-text">4.2右值对象构造，有拷贝构造，也有移动构造的场景</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-3%E5%8F%B3%E5%80%BC%E5%AF%B9%E8%B1%A1%E8%B5%8B%E5%80%BC%EF%BC%8C%E5%8F%AA%E6%9C%89%E6%8B%B7%E8%B4%9D%E6%9E%84%E9%80%A0%E5%92%8C%E6%8B%B7%E8%B4%9D%E8%B5%8B%E5%80%BC%EF%BC%8C%E6%B2%A1%E6%9C%89%E7%A7%BB%E5%8A%A8%E6%9E%84%E9%80%A0%E5%92%8C%E7%A7%BB%E5%8A%A8%E8%B5%8B%E5%80%BC%E7%9A%84%E5%9C%BA%E6%99%AF"><span class="toc-text">4.3右值对象赋值，只有拷贝构造和拷贝赋值，没有移动构造和移动赋值的场景</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-4%E5%8F%B3%E5%80%BC%E5%AF%B9%E8%B1%A1%E8%B5%8B%E5%80%BC%EF%BC%8C%E6%97%A2%E6%9C%89%E6%8B%B7%E8%B4%9D%E6%9E%84%E9%80%A0%E5%92%8C%E6%8B%B7%E8%B4%9D%E8%B5%8B%E5%80%BC%EF%BC%8C%E4%B9%9F%E6%9C%89%E7%A7%BB%E5%8A%A8%E6%9E%84%E9%80%A0%E5%92%8C%E7%A7%BB%E5%8A%A8%E8%B5%8B%E5%80%BC%E7%9A%84%E5%9C%BA%E6%99%AF"><span class="toc-text">4.4右值对象赋值，既有拷贝构造和拷贝赋值，也有移动构造和移动赋值的场景</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-5%E6%80%BB%E7%BB%93%E7%BB%93%E8%AE%BA"><span class="toc-text">4.5总结结论</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%94%EF%BC%8CC-%E5%AF%B9%E5%B7%A6%E5%80%BC%E5%8F%B3%E5%80%BC%E7%B1%BB%E5%9E%8B%E8%BF%9B%E8%A1%8C%E7%9A%84%E5%88%86%E7%B1%BB"><span class="toc-text">五，C++对左值右值类型进行的分类</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%85%AD%EF%BC%8C%E5%BC%95%E7%94%A8%E6%8A%98%E5%8F%A0%E2%80%94%E2%80%94%E5%BC%95%E7%94%A8%E4%B8%AD%E7%9A%84%E5%BC%95%E7%94%A8"><span class="toc-text">六，引用折叠——引用中的引用</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#6-1%E4%BB%80%E4%B9%88%E6%98%AF%E5%BC%95%E7%94%A8%E6%8A%98%E5%8F%A0"><span class="toc-text">6.1什么是引用折叠</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#6-1-1%E7%94%A8typedef%E5%86%99%E4%B8%80%E4%B8%AA%E5%BC%95%E7%94%A8%E6%8A%98%E5%8F%A0"><span class="toc-text">6.1.1用typedef写一个引用折叠</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-1-1%E6%A8%A1%E6%9D%BF%E4%B8%AD%E7%9A%84%E5%BC%95%E7%94%A8%E6%8A%98%E5%8F%A0"><span class="toc-text">6.1.1模板中的引用折叠</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#6-2%E5%BC%95%E7%94%A8%E6%8A%98%E5%8F%A0%E7%9A%84%E7%9B%AE%E7%9A%84"><span class="toc-text">6.2引用折叠的目的</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%83%EF%BC%8C%E5%AE%8C%E7%BE%8E%E8%BD%AC%E5%8F%91%E2%80%94%E2%80%94%E8%A7%A3%E5%86%B3%E5%8F%B3%E5%80%BC%E5%BC%95%E7%94%A8%E5%B1%9E%E6%80%A7%E5%BC%82%E5%8C%96%E9%97%AE%E9%A2%98"><span class="toc-text">七，完美转发——解决右值引用属性异化问题</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#7-1%E5%8F%B3%E5%80%BC%E5%BC%95%E7%94%A8%E5%B1%9E%E6%80%A7%E5%BC%82%E5%8C%96"><span class="toc-text">7.1右值引用属性异化</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#7-2%E5%AE%8C%E7%BE%8E%E8%BD%AC%E5%8F%91%E5%A6%82%E4%BD%95%E8%A7%A3%E5%86%B3%E4%BA%8C%E6%AC%A1%E4%BC%A0%E9%80%92%E9%97%AE%E9%A2%98"><span class="toc-text">7.2完美转发如何解决二次传递问题</span></a></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/posts/cpp11-move-semantics.html" title="Re：思考·重建·记录 现代C++ C++11篇 (二) 右值引用与移动语义&amp;引用折叠与完美转发"><img src="/img/MorernCpp02.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Re：思考·重建·记录 现代C++ C++11篇 (二) 右值引用与移动语义&amp;引用折叠与完美转发"/></a><div class="content"><a class="title" href="/posts/cpp11-move-semantics.html" title="Re：思考·重建·记录 现代C++ C++11篇 (二) 右值引用与移动语义&amp;引用折叠与完美转发">Re：思考·重建·记录 现代C++ C++11篇 (二) 右值引用与移动语义&amp;引用折叠与完美转发</a><time datetime="2026-04-12T05:47:58.000Z" title="发表于 2026-04-12 13:47:58">2026-04-12</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/posts/undefined.html" title="MyFirstGarden">MyFirstGarden</a><time datetime="2026-04-12T03:35:13.000Z" title="发表于 2026-04-12 11:35:13">2026-04-12</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By 小此方</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 8.1.1</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.5.4</a></span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.5.4"></script><script src="/js/main.js?v=5.5.4"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
