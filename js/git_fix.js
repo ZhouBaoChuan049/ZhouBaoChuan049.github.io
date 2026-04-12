@@ -9,7 +9,7 @@ function createGit() {
         p.insertBefore(d, p.firstChild);
 
         // 强行抓取数据
-        fetch('https://githubcalendar.anzhiy.cn/api?user=ZhouBaoChuan049')
+        fetch('https://api.rymcu.com/githubapi?user=ZhouBaoChuan049')
             .then(res => res.json())
             .then(data => {
                 if (data.svg) {
