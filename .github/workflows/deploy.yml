@@ -1,14 +1,12 @@
 name: Deploy to GitHub Pages
 
 on:
-  # 每次推送到 `main` 分支时触发这个“工作流程”
-  # 如果你使用了别的分支名，请按需将 `main` 替换成你的分支名
+  # 确保这里匹配你图片中显示的 master 分支
   push:
-    branches: [ main ]
-  # 允许你在 GitHub 上的 Actions 标签中手动触发此“工作流程”
+    branches: [ master ]
+  # 允许手动触发
   workflow_dispatch:
 
-# 允许 job 克隆 repo 并创建一个 page deployment
 permissions:
   contents: read
   pages: write
@@ -18,15 +16,15 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout your repository using git
-        uses: actions/checkout@v5
+      - name: Checkout your repository
+        uses: actions/checkout@v4
+
+      # 自动识别你的 pnpm 环境
       - name: Install, build, and upload your site
-        uses: withastro/action@v5
+        uses: withastro/action@v3
         with:
-          package-manager: pnpm@9.14.4
-          build-cmd: pnpm run build
-        # env:
-          # PUBLIC_POKEAPI: 'https://pokeapi.co/api/v2' # 对变量值使用单引号。（可选）
+          # 让 Astro 自动根据你的 pnpm-lock.yaml 处理依赖
+          path: . 
 
   deploy:
     needs: build
