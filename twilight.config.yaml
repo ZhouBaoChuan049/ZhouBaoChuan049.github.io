@@ -113,9 +113,9 @@ site:
             # 层级
             zIndex: -1
             # 壁纸透明度，0-1之间
-            opacity: 0.9
+            opacity: 1
             # 背景模糊程度 (像素值)
-            blur: 1
+            blur: 0
             # 导航栏透明模式
             navbar:
                 transparentMode: "semi"
